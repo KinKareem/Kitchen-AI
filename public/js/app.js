@@ -1,4 +1,5 @@
 import { recommend } from './api.js';
+import { initScene, introHero, plantSvg, revealItems } from './scene.js';
 import { esc } from './utils.js';
 
 const STORAGE_KEY = 'dapur-ai:state';
@@ -30,6 +31,8 @@ function saveState() {
 let state = loadState();
 let loading = null; // null | 'search' | 'reload'
 let errorMessage = null;
+let revealNext = false; // true setelah hasil baru tiba, agar kartu dimunculkan dengan animasi
+let currentPhoto = null;
 
 // ---------- Elemen ----------
 const $ = (id) => document.getElementById(id);
@@ -43,18 +46,22 @@ const noticeBox = $('notice');
 const resultsBox = $('results');
 const reloadBox = $('reload');
 const reloadBtn = $('reload-btn');
+const reloadLabel = $('reload-label');
+
+const scene = initScene();
+$('plant').innerHTML = plantSvg();
 
 // ---------- Tampilan ----------
 function dishHtml(r) {
   const href = `/recipe.html?id=${encodeURIComponent(r.id)}`;
   const missingShown = r.missing.slice(0, MAX_MISSING_SHOWN);
   const missingHidden = r.missing.length - missingShown.length;
-  const where = [r.area, r.category].filter(Boolean).join(', ');
+  const where = [r.area, r.category].filter(Boolean).join(' / ');
 
-  const marks =
-    r.matched.map((item) => `<li class="is-have">${esc(item)}</li>`).join('') +
-    missingShown.map((item) => `<li class="is-need">${esc(item)}</li>`).join('') +
-    (missingHidden > 0 ? `<li class="is-more">dan ${missingHidden} bahan lain</li>` : '');
+  const pills =
+    r.matched.map((item) => `<li class="pill pill--have">${esc(item)}</li>`).join('') +
+    missingShown.map((item) => `<li class="pill pill--need">${esc(item)}</li>`).join('') +
+    (missingHidden > 0 ? `<li class="pill pill--more">${missingHidden} lainnya</li>` : '');
 
   const swaps = r.substitutions.length
     ? `<details class="swap">
@@ -64,39 +71,30 @@ function dishHtml(r) {
     : '';
 
   return `
-    <article class="dish">
+    <article class="dish glass" data-photo="${esc(r.thumbnail)}">
       <a class="dish__photo" href="${href}" tabindex="-1" aria-hidden="true">
         <img src="${esc(r.thumbnail)}" alt="" loading="lazy" />
       </a>
-      <div class="dish__main">
+      <div class="dish__body">
         <h3 class="dish__name"><a href="${href}">${esc(r.name)}</a></h3>
         <p class="dish__where">${esc(where)}</p>
         <p class="dish__why">${esc(r.reason)}</p>
-        ${marks ? `<ul class="check">${marks}</ul>` : ''}
+        ${pills ? `<ul class="pills">${pills}</ul>` : ''}
         ${swaps}
-        <div class="dish__open"><a class="btn btn--line" href="${href}">Lihat resep</a></div>
+        <div class="dish__open"><a class="btn-line" href="${href}">Lihat resep</a></div>
       </div>
     </article>`;
 }
 
 function legendHtml() {
   return `<ul class="legend" aria-label="Arti penanda">
-    <li class="is-have">sudah ada</li>
-    <li class="is-need">perlu dibeli</li>
+    <li class="pill pill--have">sudah ada</li>
+    <li class="pill pill--need">perlu dibeli</li>
   </ul>`;
 }
 
 function skeletonHtml() {
-  const row = `
-    <div class="dish">
-      <div class="sk sk--img"></div>
-      <div>
-        <div class="sk sk--title"></div>
-        <div class="sk sk--line"></div>
-        <div class="sk sk--line sk--short"></div>
-      </div>
-    </div>`;
-  return `<div aria-hidden="true">${row.repeat(3)}</div>`;
+  return `<div class="list" aria-hidden="true">${'<div class="sk sk--card"></div>'.repeat(4)}</div>`;
 }
 
 function updateSubmitState() {
@@ -125,22 +123,40 @@ function render() {
   if (showNotice) {
     noticeBox.innerHTML =
       esc(state.notice) +
-      (hasResults ? ' <button type="button" class="eg" data-action="restart">Ulangi dari awal</button>' : '');
+      (hasResults && state.shownIds.length > state.results.length
+        ? ' <button type="button" class="linkbtn" data-action="restart">Ulangi dari awal</button>'
+        : '');
   }
 
   resultsBox.setAttribute('aria-busy', String(busy));
   if (loading === 'search') {
     resultsBox.innerHTML = skeletonHtml();
   } else if (hasResults) {
-    const dim = loading === 'reload' ? ' class="list--dim"' : '';
-    resultsBox.innerHTML = legendHtml() + `<div${dim}>${state.results.map(dishHtml).join('')}</div>`;
+    const dim = loading === 'reload' ? ' list--dim' : '';
+    resultsBox.innerHTML =
+      legendHtml() + `<div class="list${dim}">${state.results.map(dishHtml).join('')}</div>`;
   } else {
     resultsBox.innerHTML = '';
   }
 
   reloadBox.hidden = !(hasResults && loading !== 'search');
   reloadBtn.disabled = busy;
-  reloadBtn.textContent = loading === 'reload' ? 'Mencari opsi lain…' : 'Tampilkan opsi lain';
+  reloadBtn.classList.toggle('is-spinning', loading === 'reload');
+  reloadLabel.textContent = loading === 'reload' ? 'Mencari opsi lain…' : 'Tampilkan opsi lain';
+
+  // Foto latar mengikuti hidangan teratas. Selama mencari, foto lama dipertahankan.
+  if (loading !== 'search') {
+    const top = hasResults ? state.results[0].thumbnail : null;
+    if (top !== currentPhoto) {
+      currentPhoto = top;
+      scene.setPhoto(top);
+    }
+  }
+
+  if (revealNext && loading === null && hasResults) {
+    revealNext = false;
+    revealItems('.legend, .dish');
+  }
 }
 
 // ---------- Aksi ----------
@@ -158,6 +174,7 @@ async function search(query) {
       shownIds: res.results.map((r) => r.id),
       notice: res.message,
     };
+    revealNext = true;
     saveState();
   } catch (err) {
     errorMessage = err.message || 'Terjadi kesalahan.';
@@ -184,8 +201,9 @@ async function reload() {
         ingredients: res.ingredients,
         results: res.results,
         shownIds: [...state.shownIds, ...res.results.map((r) => r.id)],
-        notice: null,
+        notice: res.message,
       };
+      revealNext = true;
     }
     saveState();
   } catch (err) {
@@ -220,6 +238,18 @@ noticeBox.addEventListener('click', (e) => {
   }
 });
 
+// Menyorot kartu mengganti foto latar
+function previewPhoto(e) {
+  const card = e.target.closest('.dish');
+  if (card && loading === null && card.dataset.photo !== currentPhoto) {
+    currentPhoto = card.dataset.photo;
+    scene.setPhoto(currentPhoto);
+  }
+}
+resultsBox.addEventListener('pointerover', previewPhoto);
+resultsBox.addEventListener('focusin', previewPhoto);
+
 // ---------- Mulai ----------
 input.value = state.query;
 render();
+introHero();

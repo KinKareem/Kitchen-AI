@@ -1,44 +1,18 @@
 /* ==========================================================================
-   Dapur AI
-   Arah desain: papan menu warung. Huruf condensed tebal seperti tulisan
-   papan, hijau daun pisang sebagai tinta, cabai untuk aksi, kunyit sebagai
-   penanda stabilo untuk bahan yang perlu dibeli.
+   Dapur AI: panel kaca di atas foto, hijau dedaunan, huruf Work Sans.
    ========================================================================== */
 
 :root {
-  --kertas: #eef2ea;
-  /* latar: putih kehijauan, bukan krem */
-  --tinta: #173a28;
-  /* hijau daun pisang tua: teks dan garis tebal */
-  --redup: #4e6556;
-  /* teks sekunder */
-  --garis: #c5d1c3;
-  /* garis tipis dan placeholder gambar */
-  --cabai: #d43a1f;
-  /* aksi utama */
-  --cabai-gelap: #b22e16;
-  --teks-cabai: #ffffff;
-  --penanda: #f3b61f;
-  /* kunyit: stabilo bahan yang perlu dibeli */
-  --sirih: #1f6b42;
-  /* bahan yang sudah ada */
-
-  --display: 'Archivo', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
-  --body: 'Atkinson Hyperlegible', system-ui, 'Segoe UI', Roboto, sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --kertas: #0f1d16;
-    --tinta: #e6f0e3;
-    --redup: #9db3a4;
-    --garis: #2f4639;
-    --cabai: #ff6b4a;
-    --cabai-gelap: #ff8668;
-    --teks-cabai: #1b0b06;
-    --penanda: #7a5c06;
-    --sirih: #7fd3a0;
-  }
+  --deep: #0b2316;
+  --cream: #f1f0e2;
+  --cream-dim: rgba(241, 240, 226, 0.76);
+  --cream-faint: rgba(241, 240, 226, 0.45);
+  --line: rgba(241, 240, 226, 0.2);
+  --ink: #10281a;
+  --lime: #bde35a;
+  --amber: #f5c84b;
+  --coral: #ff8a6b;
+  --font: 'Work Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
 *,
@@ -47,13 +21,19 @@
   box-sizing: border-box;
 }
 
+html {
+  background: var(--deep);
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
-  background: var(--kertas);
-  color: var(--tinta);
-  font-family: var(--body);
-  font-size: 1.0625rem;
+  min-height: 100vh;
+  color: var(--cream);
+  font-family: var(--font);
+  font-size: 1rem;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -61,7 +41,7 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid var(--cabai);
+  outline: 3px solid var(--lime);
   outline-offset: 3px;
 }
 
@@ -69,212 +49,382 @@ a {
   display: none !important;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .wrap {
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 24px 24px 0;
 }
 
-/* ---------- Header & footer ---------- */
-.head {
-  padding: 20px 0;
-  border-bottom: 3px solid var(--tinta);
+/* ---------- Latar: foto buram + dedaunan ---------- */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 30% 10%, #1c5a2e 0%, #0b2316 70%);
+}
+
+.bg__photo {
+  position: absolute;
+  inset: -60px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(32px) saturate(1.15) brightness(0.72);
+  opacity: 0;
+}
+
+.bg__leaves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.bg__shade {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(110% 80% at 50% 15%, rgba(6, 30, 16, 0.1) 0%, rgba(3, 16, 9, 0.74) 100%);
+}
+
+/* ---------- Kaca ---------- */
+.glass {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05));
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  backdrop-filter: blur(22px) saturate(140%);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: rgba(16, 48, 30, 0.86);
+  }
+}
+
+/* ---------- Bilah atas ---------- */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .brand {
-  font-family: var(--display);
-  font-stretch: 75%;
-  font-weight: 800;
-  font-size: 1.6rem;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  font-weight: 600;
   text-decoration: none;
 }
 
-.foot {
-  margin-top: 72px;
-  padding-top: 24px;
-  padding-bottom: 40px;
-  border-top: 2px solid var(--garis);
-  color: var(--redup);
-  font-size: 0.9rem;
+.brand__mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--lime), #2f8a3a);
 }
 
-.foot p {
-  max-width: 62ch;
-  margin: 0;
+.back-btn {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--cream);
+  color: var(--ink);
+  text-decoration: none;
 }
 
-/* ---------- Pertanyaan: kalimat yang harus dilengkapi ---------- */
-.ask {
-  margin: 56px 0 8px;
+.back-btn:hover {
+  background: var(--lime);
 }
 
-.ask__lead {
-  display: block;
-  font-family: var(--display);
-  font-stretch: 70%;
-  font-weight: 800;
-  font-size: clamp(2.6rem, 10vw, 6rem);
-  line-height: 0.95;
-  letter-spacing: -0.01em;
+/* ---------- Tombol & pil ---------- */
+.btn-cream {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.ask__field {
+.btn-cream:hover:not(:disabled) {
+  background: var(--lime);
+}
+
+.btn-cream:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-line {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 24px;
+  border: 1px solid var(--cream-faint);
+  border-radius: 999px;
+  color: var(--cream);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.btn-line:hover {
+  border-color: var(--cream);
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border: 1px solid var(--cream-faint);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cream);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+button.pill {
+  cursor: pointer;
+}
+
+button.pill:hover:not(:disabled) {
+  background: var(--cream);
+  border-color: var(--cream);
+  color: var(--ink);
+}
+
+button.pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pill--have {
+  background: var(--cream);
+  border-color: var(--cream);
+  color: var(--ink);
+}
+
+.pill--have::before {
+  content: '\2713';
+  font-weight: 700;
+}
+
+.pill--need {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.pill--need::before {
+  content: '+';
+  font-weight: 700;
+}
+
+.pill--more {
+  border-style: dashed;
+  color: var(--cream-dim);
+}
+
+.linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--lime);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(240px, 36%) 1fr;
+  gap: 24px;
+  min-height: 500px;
+  margin-top: 28px;
+  padding: 56px 56px 56px 0;
+}
+
+.hero__plant {
   position: relative;
-  margin-top: 6px;
+  align-self: stretch;
 }
 
-/* Satu-satunya gerak otomatis di halaman: garis isian tertarik saat halaman dibuka. */
-.ask__field::after {
-  content: '';
+.hero__plant svg {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 4px;
-  background: var(--tinta);
-  transform-origin: left;
-  animation: tarik 0.9s ease-out both;
+  left: -64px;
+  bottom: -36px;
+  height: 118%;
+  width: auto;
+  max-width: none;
+  overflow: visible;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.45));
 }
 
-.ask__field:focus-within::after {
-  background: var(--cabai);
+.hero__body {
+  align-self: center;
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+  color: var(--cream-dim);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero__title {
+  margin: 0 0 20px;
+  font-size: clamp(2.8rem, 7vw, 5.2rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+.line>span {
+  display: block;
+}
+
+.hero__sub {
+  max-width: 30rem;
+  margin: 0 0 26px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--cream-faint);
+  color: var(--cream);
+  font-size: 1.25rem;
+  font-weight: 300;
+}
+
+.ask__box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 24px;
+  border: 1px solid var(--cream-faint);
+  border-radius: 999px;
+  background: rgba(8, 28, 16, 0.3);
+}
+
+.ask__box:focus-within {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 4px rgba(189, 227, 90, 0.18);
 }
 
 .ask__input {
-  display: block;
-  width: 100%;
-  padding: 6px 0 12px;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0;
   border: 0;
-  border-radius: 0;
   background: transparent;
-  color: var(--tinta);
-  font-family: var(--display);
-  font-stretch: 80%;
-  font-weight: 600;
-  font-size: clamp(1.6rem, 5.5vw, 3rem);
-  line-height: 1.2;
-}
-
-.ask__input::placeholder {
-  color: var(--redup);
-  opacity: 0.55;
+  color: var(--cream);
+  font-family: var(--font);
+  font-size: 1.1rem;
 }
 
 .ask__input:focus-visible {
   outline: none;
 }
 
-.ask__actions {
+.ask__input::placeholder {
+  color: var(--cream-dim);
+  opacity: 0.7;
+}
+
+.hero__pills {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 16px 28px;
+  gap: 10px;
   margin-top: 22px;
-}
-
-.eg-line {
-  margin: 0;
-  color: var(--redup);
+  color: var(--cream-dim);
   font-size: 0.95rem;
-}
-
-.eg {
-  margin: 0 10px 0 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--tinta);
-  font: inherit;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.eg:hover:not(:disabled) {
-  color: var(--cabai);
-}
-
-.eg:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ---------- Tombol ---------- */
-.btn {
-  display: inline-block;
-  padding: 14px 28px;
-  border: 2px solid var(--cabai);
-  border-radius: 6px;
-  background: var(--cabai);
-  color: var(--teks-cabai);
-  font-family: var(--body);
-  font-size: 1.05rem;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.btn:hover:not(:disabled) {
-  background: var(--cabai-gelap);
-  border-color: var(--cabai-gelap);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn--line {
-  background: transparent;
-  border-color: var(--tinta);
-  color: var(--tinta);
-}
-
-.btn--line:hover {
-  background: var(--tinta);
-  border-color: var(--tinta);
-  color: var(--kertas);
 }
 
 /* ---------- Pemberitahuan ---------- */
 .note {
-  margin: 24px 0 0;
-  padding: 12px 16px;
-  border-left: 5px solid var(--penanda);
-  background: rgba(243, 182, 31, 0.16);
+  margin: 20px 0 0;
+  padding: 14px 20px;
+  border: 1px solid rgba(245, 200, 75, 0.45);
+  border-radius: 18px;
+  background: rgba(245, 200, 75, 0.14);
 }
 
 .note--error {
-  border-left-color: var(--cabai);
-  background: rgba(212, 58, 31, 0.12);
+  border-color: rgba(255, 138, 107, 0.55);
+  background: rgba(255, 138, 107, 0.16);
 }
 
 .read {
-  margin: 24px 0 0;
-  color: var(--redup);
+  margin: 20px 4px 0;
+  color: var(--cream-dim);
 }
 
 .read strong {
-  color: var(--tinta);
+  color: var(--cream);
+  font-weight: 600;
 }
 
-/* ---------- Daftar hasil ---------- */
+/* ---------- Hasil ---------- */
 .results {
-  margin-top: 40px;
+  margin-top: 36px;
 }
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 24px;
-  margin: 0 0 16px;
+  gap: 8px;
+  margin: 0 0 18px;
   padding: 0;
   list-style: none;
-  color: var(--redup);
-  font-size: 0.9rem;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  transition: opacity 0.2s;
 }
 
 .list--dim {
@@ -283,15 +433,11 @@ a {
 }
 
 .dish {
-  display: grid;
-  grid-template-columns: minmax(0, 220px) 1fr;
-  gap: 24px;
-  padding: 28px 0;
-  border-top: 3px solid var(--tinta);
-}
-
-.dish:last-child {
-  border-bottom: 3px solid var(--tinta);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 12px 12px 26px;
+  border-radius: 28px;
 }
 
 .dish__photo {
@@ -301,19 +447,26 @@ a {
 .dish__photo img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 220px;
   object-fit: cover;
-  border-radius: 4px;
-  background: var(--garis);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dish__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 14px;
 }
 
 .dish__name {
-  margin: 0 0 4px;
-  font-family: var(--display);
-  font-stretch: 75%;
-  font-weight: 800;
-  font-size: clamp(1.7rem, 4vw, 2.4rem);
-  line-height: 1.05;
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
 .dish__name a {
@@ -322,151 +475,140 @@ a {
 
 .dish__name a:hover {
   text-decoration: underline;
-  text-decoration-thickness: 3px;
   text-underline-offset: 4px;
 }
 
 .dish__where {
-  margin: 0 0 10px;
-  color: var(--redup);
-  font-size: 0.95rem;
+  margin: 0;
+  color: var(--cream-dim);
+  font-size: 0.9rem;
 }
 
 .dish__why {
-  max-width: 62ch;
   margin: 0;
+  color: var(--cream);
+  font-weight: 300;
 }
 
-/* Penanda bahan: tanda centang = sudah ada, stabilo kunyit = perlu dibeli */
-.check {
+.pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 18px;
-  margin: 14px 0 0;
+  gap: 8px;
+  margin: 4px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.is-have {
-  color: var(--sirih);
-  font-weight: 700;
-}
-
-.is-have::before {
-  content: '\2713\00a0';
-}
-
-.is-need {
-  padding: 0 2px;
-  background: linear-gradient(transparent 58%, var(--penanda) 58%);
-  font-weight: 700;
-}
-
-.is-need::before {
-  content: '+\00a0';
-}
-
-.is-more {
-  color: var(--redup);
-}
-
-.swap {
-  margin-top: 14px;
-}
-
 .swap summary {
-  font-weight: 700;
+  color: var(--lime);
+  font-weight: 600;
   cursor: pointer;
 }
 
 .swap ul {
-  max-width: 62ch;
   margin: 8px 0 0;
   padding-left: 20px;
+  color: var(--cream-dim);
 }
 
 .dish__open {
-  margin-top: 18px;
+  margin-top: auto;
+  padding-top: 8px;
 }
 
-/* ---------- Opsi lain ---------- */
 .more {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 20px;
+  justify-content: center;
   margin-top: 36px;
 }
 
-.more p {
-  margin: 0;
-  color: var(--redup);
+.spin {
+  width: 18px;
+  height: 18px;
+}
+
+.is-spinning .spin {
+  animation: putar 0.9s linear infinite;
 }
 
 /* ---------- Halaman resep ---------- */
-.back {
-  display: inline-block;
-  margin: 28px 0 8px;
-  font-weight: 700;
+.rhero {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 40px;
+  align-items: center;
+  margin-top: 70px;
+  padding: 48px 48px 48px 28px;
 }
 
-.recipe__title {
-  margin: 8px 0;
-  font-family: var(--display);
-  font-stretch: 70%;
-  font-weight: 800;
-  font-size: clamp(2.6rem, 9vw, 5.5rem);
-  line-height: 0.95;
+.rhero__plate {
+  align-self: start;
+  width: 100%;
+  aspect-ratio: 1;
+  margin: -90px 0 -40px -48px;
+  border: 8px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rhero__plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rtitle {
+  margin: 0 0 8px;
+  font-size: clamp(2.3rem, 5.5vw, 4.2rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+.rsub {
+  margin: 0 0 22px;
+  padding-bottom: 14px;
+  max-width: 30rem;
+  border-bottom: 1px solid var(--cream-faint);
+  color: var(--cream-dim);
+  font-size: 1.15rem;
+  font-weight: 300;
+}
+
+.rlinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.rgrid {
+  display: grid;
+  grid-template-columns: minmax(0, 360px) 1fr;
+  gap: 24px;
+  align-items: start;
+  margin-top: 24px;
+}
+
+.panel {
+  padding: 32px;
+}
+
+.panel h2 {
+  margin: 0 0 16px;
+  font-size: 1.5rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
-.recipe__sub {
-  margin: 0;
-  color: var(--redup);
-  font-style: italic;
-}
-
-.recipe__where {
-  margin: 6px 0 0;
-  color: var(--redup);
-}
-
-.recipe__body {
-  display: grid;
-  grid-template-columns: minmax(0, 380px) 1fr;
-  gap: 48px;
-  align-items: start;
-  margin-top: 32px;
-}
-
-.recipe__side {
+.rgrid .panel:first-child {
   position: sticky;
   top: 24px;
 }
 
-.recipe__side img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  border-radius: 4px;
-  background: var(--garis);
-}
-
-.recipe h2 {
-  margin: 28px 0 10px;
-  font-family: var(--display);
-  font-stretch: 75%;
-  font-weight: 800;
-  font-size: 1.7rem;
-  line-height: 1.1;
-}
-
-.recipe__steps h2 {
-  margin-top: 0;
-}
-
-/* Daftar bahan seperti daftar menu: nama, titik-titik, takaran */
 .menu {
   margin: 0;
   padding: 0;
@@ -476,22 +618,21 @@ a {
 .menu li {
   display: flex;
   align-items: baseline;
-  padding: 6px 0;
+  padding: 7px 0;
 }
 
 .menu__dots {
   flex: 1;
   min-width: 16px;
   margin: 0 8px;
-  border-bottom: 2px dotted var(--garis);
+  border-bottom: 1px dotted var(--cream-faint);
 }
 
 .menu__measure {
-  color: var(--redup);
+  color: var(--cream-dim);
   text-align: right;
 }
 
-/* Langkah memasak memang berurutan, jadi diberi nomor */
 .steps {
   margin: 0;
   padding: 0;
@@ -501,66 +642,57 @@ a {
 
 .steps li {
   display: grid;
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 64px 1fr;
   gap: 12px;
-  max-width: 68ch;
-  padding: 16px 0;
-  border-top: 2px solid var(--garis);
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
   counter-increment: langkah;
+}
+
+.steps li:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .steps li::before {
   content: counter(langkah);
-  color: var(--cabai);
-  font-family: var(--display);
-  font-stretch: 70%;
-  font-weight: 800;
-  font-size: 2.6rem;
+  color: var(--lime);
+  font-size: 2.2rem;
+  font-weight: 700;
   line-height: 1;
-}
-
-.recipe__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 28px;
 }
 
 /* ---------- Memuat ---------- */
 .sk {
-  border-radius: 4px;
-  background: var(--garis);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
   animation: denyut 1.4s ease-in-out infinite;
 }
 
-.sk--img {
-  aspect-ratio: 4 / 3;
-}
-
-.sk--title {
-  width: 60%;
-  height: 34px;
-  margin-bottom: 14px;
-}
-
-.sk--line {
-  height: 16px;
-  margin-bottom: 12px;
-}
-
-.sk--short {
-  width: 45%;
+.sk--card {
+  height: 340px;
+  border-radius: 28px;
 }
 
 .sk--hero {
-  height: 260px;
-  margin-bottom: 20px;
+  height: 300px;
+  margin-top: 28px;
+  border-radius: 28px;
 }
 
-@keyframes tarik {
-  from {
-    transform: scaleX(0);
-  }
+/* ---------- Footer ---------- */
+.foot {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 56px 24px 40px;
+  color: var(--cream-dim);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.foot p {
+  max-width: 60ch;
+  margin: 0 auto;
 }
 
 @keyframes denyut {
@@ -569,43 +701,75 @@ a {
   }
 }
 
+@keyframes putar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
 
-  .ask__field::after,
-  .sk {
+  .sk,
+  .is-spinning .spin {
     animation: none;
   }
 }
 
-/* ---------- Layar kecil ---------- */
+/* ---------- Layar menengah dan kecil ---------- */
+@media (max-width: 900px) {
+  .list {
+    grid-template-columns: 1fr;
+  }
+
+  .rgrid {
+    grid-template-columns: 1fr;
+  }
+
+  .rgrid .panel:first-child {
+    position: static;
+  }
+}
+
 @media (max-width: 720px) {
   .wrap {
-    padding: 0 18px;
+    padding: 18px 16px 0;
   }
 
-  .ask {
-    margin-top: 36px;
-  }
-
-  .dish {
+  .hero {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 0;
+    min-height: 0;
+    padding: 0 24px 32px;
   }
 
-  .dish__photo img {
-    aspect-ratio: 16 / 9;
+  .hero__plant {
+    height: 150px;
   }
 
-  .recipe__body {
+  .hero__plant svg {
+    left: -30px;
+    bottom: auto;
+    top: -40px;
+    height: 220px;
+  }
+
+  .rhero {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 20px;
+    margin-top: 40px;
+    padding: 0 24px 32px;
   }
 
-  .recipe__side {
-    position: static;
+  .rhero__plate {
+    width: 220px;
+    margin: -40px 0 0 -8px;
+  }
+
+  .panel {
+    padding: 24px;
   }
 
   .steps li {
-    grid-template-columns: 44px 1fr;
+    grid-template-columns: 48px 1fr;
   }
 }

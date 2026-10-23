@@ -1,8 +1,10 @@
 import { getRecipe } from './api.js';
+import { initScene, introRecipe } from './scene.js';
 import { esc, safeUrl } from './utils.js';
 
 const content = document.getElementById('content');
 const id = new URLSearchParams(location.search).get('id') ?? '';
+const scene = initScene();
 
 function showError(message) {
   content.innerHTML = `<div class="note note--error" role="alert">${esc(message)}</div>`;
@@ -12,9 +14,7 @@ function showLoading() {
   content.innerHTML = `
     <div aria-busy="true">
       <div class="sk sk--hero"></div>
-      <div class="sk sk--line"></div>
-      <div class="sk sk--line sk--short"></div>
-      <p class="more" style="color: var(--redup)">Menyiapkan resep dan menerjemahkannya…</p>
+      <p class="read">Menyiapkan resep dan menerjemahkannya…</p>
     </div>`;
 }
 
@@ -27,30 +27,36 @@ function render({ original, translated }) {
       .split(/\r?\n+/)
       .map((s) => s.trim())
       .filter(Boolean);
-  const where = [original.area, original.category].filter(Boolean).join(', ');
+  const where = [original.area, original.category].filter(Boolean).join(' / ');
   const youtube = original.youtube ? safeUrl(original.youtube) : null;
   const source = original.source ? safeUrl(original.source) : null;
+  const subtitle =
+    translated && translated.name !== original.name ? original.name : 'Resep lengkap, bahan, dan langkahnya';
 
   document.title = `${title} - Dapur AI`;
+  scene.setPhoto(original.thumbnail);
 
   content.innerHTML = `
-    <article class="recipe">
-      <header>
-        <h1 class="recipe__title">${esc(title)}</h1>
-        ${translated && translated.name !== original.name
-      ? `<p class="recipe__sub">${esc(original.name)}</p>`
-      : ''
-    }
-        <p class="recipe__where">${esc(where)}</p>
-        ${translated
+    <article>
+      <section class="rhero glass">
+        <div class="rhero__plate"><img src="${esc(original.thumbnail)}" alt="${esc(original.name)}" /></div>
+        <div class="rhero__copy">
+          <p class="eyebrow">${esc(where)}</p>
+          <h1 class="rtitle">${esc(title)}</h1>
+          <p class="rsub">${esc(subtitle)}</p>
+          ${translated
       ? ''
       : '<div class="note" role="status">Terjemahan sedang tidak tersedia, jadi resep ditampilkan dalam bahasa aslinya (Inggris).</div>'
     }
-      </header>
+          <div class="rlinks">
+            ${youtube ? `<a class="btn-cream" href="${esc(youtube)}" target="_blank" rel="noreferrer">Tonton video</a>` : ''}
+            ${source ? `<a class="btn-line" href="${esc(source)}" target="_blank" rel="noreferrer">Sumber resep</a>` : ''}
+          </div>
+        </div>
+      </section>
 
-      <div class="recipe__body">
-        <aside class="recipe__side">
-          <img src="${esc(original.thumbnail)}" alt="${esc(original.name)}" />
+      <div class="rgrid">
+        <section class="panel glass">
           <h2>Bahan</h2>
           <ul class="menu">
             ${ingredients
@@ -60,20 +66,18 @@ function render({ original, translated }) {
       )
       .join('')}
           </ul>
-        </aside>
+        </section>
 
-        <section class="recipe__steps">
+        <section class="panel glass">
           <h2>Cara memasak</h2>
           <ol class="steps">
             ${steps.map((step) => `<li><span>${esc(step)}</span></li>`).join('')}
           </ol>
-          <div class="recipe__links">
-            ${youtube ? `<a class="btn btn--line" href="${esc(youtube)}" target="_blank" rel="noreferrer">Tonton video</a>` : ''}
-            ${source ? `<a class="btn btn--line" href="${esc(source)}" target="_blank" rel="noreferrer">Buka sumber resep</a>` : ''}
-          </div>
         </section>
       </div>
     </article>`;
+
+  introRecipe();
 }
 
 async function init() {

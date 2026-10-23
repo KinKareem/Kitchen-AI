@@ -2,7 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { parseIngredients, rankAndExplain, translateRecipe } from './ai.js';
-import { findCandidates } from './matcher.js';
+import { findCandidates, selectRelevant } from './matcher.js';
 import { lookupMeal } from './mealdb.js';
 
 export const apiRouter = Router();
@@ -32,7 +32,7 @@ apiRouter.post('/recommend', limiter(30), async (req, res, next) => {
     const parsed = recommendSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
-        error: 'Input tidak valid. Tulis bahan yang Anda punya, misalnya: telur, tahu, cabai.',
+        error: 'Input tidak valid. Tulis bahan yang kamu punya, misalnya: telur, tahu, cabai.',
       });
       return;
     }
@@ -45,7 +45,7 @@ apiRouter.post('/recommend', limiter(30), async (req, res, next) => {
         results: [],
         hasMore: false,
         message:
-          'Saya tidak menemukan bahan makanan di pesan Anda. Coba sebutkan bahan, misalnya: ayam, bawang putih, kecap.',
+          'Saya tidak menemukan bahan makanan di pesanmu. Coba sebutkan bahan, misalnya: ayam, bawang putih, kecap.',
       });
       return;
     }
@@ -64,12 +64,23 @@ apiRouter.post('/recommend', limiter(30), async (req, res, next) => {
       return;
     }
 
-    const results = await rankAndExplain(ingredients, candidates, 4);
+    // Utamakan resep yang memakai semua bahan pengguna; yang sebagian baru dipakai bila tak ada yang lengkap.
+    const { pool, partialOnly } = selectRelevant(candidates);
+    const results = await rankAndExplain(ingredients, pool, 4);
+
+    let message = null;
+    if (partialOnly) {
+      message =
+        excludeIds.length > 0
+          ? 'Resep yang memakai semua bahanmu sudah habis ditampilkan. Berikut yang paling mendekati.'
+          : `Belum ada resep yang memakai semua bahanmu (${ingredients.join(', ')}). Berikut yang paling mendekati.`;
+    }
+
     res.json({
       ingredients,
       results,
-      hasMore: candidates.length > results.length,
-      message: null,
+      hasMore: pool.length > results.length,
+      message,
     });
   } catch (err) {
     next(err);

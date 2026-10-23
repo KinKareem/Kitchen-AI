@@ -76,7 +76,9 @@ export async function rankAndExplain(userIngredients, candidates, count = 4) {
   const fallback = () =>
     candidates.slice(0, count).map((c) => ({
       ...c,
-      reason: `Cocok dengan ${c.matchedCount} bahan yang Anda punya.`,
+      reason: c.coversAll
+        ? 'Memakai semua bahan yang kamu punya.'
+        : `Memakai ${c.coverage} dari ${userIngredients.length} bahan yang kamu punya.`,
       substitutions: [],
     }));
 
@@ -90,6 +92,7 @@ export async function rankAndExplain(userIngredients, candidates, count = 4) {
         'For each pick write:',
         '- "reason": 1-2 friendly sentences in Indonesian explaining why it suits the user.',
         '- "substitutions": up to 2 short Indonesian tips for replacing missing ingredients with common Indonesian kitchen items. Use an empty array if not needed.',
+        'Candidates with "coversAll": true use every ingredient the user has, so prefer them. Never claim a recipe uses an ingredient that is not in its "matched" list.',
         'Use ONLY ids that appear in the candidate list.',
         'Return ONLY JSON: {"picks":[{"id":"...","reason":"...","substitutions":["..."]}]}',
       ].join('\n'),
@@ -102,6 +105,7 @@ export async function rankAndExplain(userIngredients, candidates, count = 4) {
           area: c.area,
           matched: c.matched,
           missing: c.missing,
+          coversAll: c.coversAll,
         })),
       }),
       schema: picksSchema,
